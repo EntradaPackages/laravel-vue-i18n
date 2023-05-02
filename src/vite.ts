@@ -3,33 +3,37 @@ import { existsSync, writeFileSync, unlinkSync, readdirSync, rmdirSync } from 'f
 import { parseAll, hasPhpTranslations, generateFiles } from './loader'
 import { ParsedLangFileInterface } from './interfaces/parsed-lang-file'
 import { Plugin } from 'vite'
+import glob from 'glob'
 
-export default function i18n(langPath: string = 'lang'): Plugin {
-  langPath = langPath.replace(/[\\/]$/, '') + path.sep
+export default function i18n({ langPath = 'lang', paths = ['lang'] }): Plugin {
+  paths = paths.flatMap(p => glob.sync(p))
 
   const frameworkLangPath = 'vendor/laravel/framework/src/Illuminate/Translation/lang/'.replace('/', path.sep)
   let files: ParsedLangFileInterface[] = []
   let exitHandlersBound: boolean = false
 
   const clean = () => {
-    files.forEach((file) => unlinkSync(langPath + file.name))
+    paths.forEach(path => {
+      files.forEach((file) => unlinkSync(path.replace(/\/$/, '') + '/' + file.name))
 
-    files = []
+      files = []
 
-    if (existsSync(langPath) && readdirSync(langPath).length < 1) {
-      rmdirSync(langPath)
-    }
+      if (existsSync(path) && readdirSync(path).length < 1) {
+        rmdirSync(path)
+      }
+    })
   }
 
+  
   return {
     name: 'i18n',
     enforce: 'post',
     config(config) {
-      if (!hasPhpTranslations(frameworkLangPath) && !hasPhpTranslations(langPath)) {
+      files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap(p => parseAll(p))])
+
+      if (!files.length) {
         return
       }
-
-      files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...parseAll(langPath)])
 
       /** @ts-ignore */
       process.env.VITE_LARAVEL_VUE_I18N_HAS_PHP = true
@@ -42,8 +46,8 @@ export default function i18n(langPath: string = 'lang'): Plugin {
     },
     buildEnd: clean,
     handleHotUpdate(ctx) {
-      if (/lang\/.*\.php$/.test(ctx.file)) {
-        files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...parseAll(langPath)])
+      if (/.*\lang\/.*\.php$/i.test(ctx.file)) {
+        files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap(p => parseAll(p))])
       }
     },
     configureServer(server) {

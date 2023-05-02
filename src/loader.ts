@@ -41,22 +41,29 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
   const data = []
   for (const folder of folders) {
     const langFolderPath = folderPath + path.sep + folder
-
+    const module = langFolderPath.match(/app\/Modules\/([A-Za-z]+)/)
     const lang = readThroughDir(langFolderPath)
 
-    data.push({
+    let translation = {
       folder,
       translations: convertToDotsSyntax(lang)
-    })
+    };
+
+    if (module && module[1]) {
+      translation['module'] = module[1].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
+    }
+
+    data.push(translation);
   }
 
   return data
     .filter(({ translations }) => {
       return Object.keys(translations).length > 0
     })
-    .map(({ folder, translations }) => {
+    .map(({ module, folder, translations }) => {
       return {
         name: `php_${folder}.json`,
+        module,
         translations
       }
     })
@@ -155,7 +162,7 @@ export const generateFiles = (langPath: string, data: ParsedLangFileInterface[])
   }
 
   data.forEach(({ name, translations }) => {
-    fs.writeFileSync(langPath + name, JSON.stringify(translations))
+    fs.writeFileSync(langPath.replace(/\/$/, '') + '/' + name, JSON.stringify(translations))
   })
 
   return data
@@ -164,12 +171,18 @@ export const generateFiles = (langPath: string, data: ParsedLangFileInterface[])
 function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
   const obj = {}
 
-  data.forEach(({ name, translations }) => {
+  data.forEach(({ name, module, translations }) => {
     if (!obj[name]) {
       obj[name] = {}
     }
 
-    obj[name] = { ...obj[name], ...translations }
+    let mapped = {};
+
+    Object.entries(translations).forEach(([key, val]) => {
+      mapped[module ? `${module}::${key}` : key] = val;
+    })
+
+    obj[name] = { ...obj[name], ...mapped }
   })
 
   const arr = []
