@@ -11,6 +11,10 @@
     "vue3",
     "inertiajs"
   ],
+  "files": [
+    "src",
+    "dist"
+  ],
   "repository": "https://github.com/xico2k/laravel-vue-i18n",
   "license": "MIT",
   "description": "allows to connect your `Laravel` Framework localization files with `Vue`.",
@@ -26,8 +30,7 @@
     "build:client": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig.commonjs.json && babel dist/cjs/utils/has-php-translations.js --out-file dist/cjs/utils/has-php-translations.js",
     "build": "npm run build:plugins && npm run build:client && npm run build:cjs",
-    "prepare": "npm run build",
-    "postpublish": "PACKAGE_VERSION=$(cat package.json | grep \\\"version\\\" | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]') && git tag v$PACKAGE_VERSION && git push --tags"
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@babel/cli": "^7.20.7",

@@ -13,7 +13,7 @@ export default function i18n({ langPath = 'lang', paths = ['lang'] }): Plugin {
   let exitHandlersBound: boolean = false
 
   const clean = () => {
-    paths.forEach(path => {
+    paths.forEach((path) => {
       files.forEach((file) => unlinkSync(path.replace(/\/$/, '') + '/' + file.name))
 
       files = []
@@ -24,12 +24,11 @@ export default function i18n({ langPath = 'lang', paths = ['lang'] }): Plugin {
     })
   }
 
-  
   return {
     name: 'i18n',
     enforce: 'post',
     config(config) {
-      files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap(p => parseAll(p))])
+      files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap((p) => parseAll(p))])
 
       if (!files.length) {
         return
@@ -47,7 +46,7 @@ export default function i18n({ langPath = 'lang', paths = ['lang'] }): Plugin {
     buildEnd: clean,
     handleHotUpdate(ctx) {
       if (/.*\lang\/.*\.php$/i.test(ctx.file)) {
-        files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap(p => parseAll(p))])
+        files = generateFiles(langPath, [...parseAll(frameworkLangPath), ...paths.flatMap((p) => parseAll(p))])
       }
     },
     configureServer(server) {

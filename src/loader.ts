@@ -41,7 +41,7 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
   const data = []
   for (const folder of folders) {
     if (folder === 'vendor') {
-      continue; // Don't proccess vendor overrides
+      continue // Don't proccess vendor overrides
     }
 
     const langFolderPath = folderPath + path.sep + folder
@@ -51,13 +51,16 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
     let translation = {
       folder,
       translations: convertToDotsSyntax(lang)
-    };
-
-    if (namespace && namespace[0]) {
-      translation['namespace'] = namespace[0].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
     }
 
-    data.push(translation);
+    if (namespace && namespace[0]) {
+      translation['namespace'] = namespace[0].replace(
+        /[A-Z]+(?![a-z])|[A-Z]/g,
+        (str, char) => (char ? '-' : '') + str.toLowerCase()
+      )
+    }
+
+    data.push(translation)
   }
 
   return data
@@ -180,10 +183,10 @@ function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
       obj[name] = {}
     }
 
-    let mapped = {};
+    let mapped = {}
 
     Object.entries(translations).forEach(([key, val]) => {
-      mapped[namespace ? `${namespace}::${key}` : key] = val;
+      mapped[namespace ? `${namespace}::${key}` : key] = val
     })
 
     obj[name] = { ...obj[name], ...mapped }
@@ -198,12 +201,12 @@ function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
 }
 
 function parseOverrides(langPath: string, data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
-  return data.map(translation => {
+  return data.map((translation) => {
     let vendorPath = `${langPath}/vendor/${translation.namespace}`.replace('/', path.sep)
-    let overrides = {};
+    let overrides = {}
 
     if (!translation.namespace || !fs.existsSync(vendorPath)) {
-      return translation;
+      return translation
     }
 
     parseAll(vendorPath).forEach((override) => {
@@ -212,12 +215,13 @@ function parseOverrides(langPath: string, data: ParsedLangFileInterface[]): Pars
       }
 
       Object.entries(override.translations).forEach(([key, val]) => {
-        overrides[key] = val;
-      });
+        overrides[key] = val
+      })
     })
 
     return {
-      ...translation, translations: { ...translation.translations, ...overrides }
+      ...translation,
+      translations: { ...translation.translations, ...overrides }
     }
-  });
+  })
 }

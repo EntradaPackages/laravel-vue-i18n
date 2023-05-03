@@ -1,0 +1,58 @@
+name: Publish NPM Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [published]
+
+jobs:
+    
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+      
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v2
+
+    - name: Get release
+      id: release
+      uses: actions/github-script@v3
+      with:
+        script: |
+          core.setOutput('ref', context.ref.replace('refs/tags/', ''));
+
+    - name: Setup NodeJS
+      uses: actions/setup-node@v2
+      with:
+        node-version: v18
+        registry-url: 'https://npm.pkg.github.com'
+
+    - name: Validate package version
+      uses: actions/github-script@v3
+      with: 
+        script: |
+          const version = require(`${process.env.GITHUB_WORKSPACE}/package.json`).version,
+                release = '${{ steps.release.outputs.ref }}'.replace('v', '');
+
+          core.info(`Current package version is ${version}`);
+          core.info(`Current release verison is ${release}`);
+
+          if (version != release) {
+            core.setFailed(`Tag does not match package version. Please update the version in package.json to continue.`);
+          }
+  
+    - name: Install npm dependencies
+      run: npm install
+
+    - name: Build package
+      run: |
+        npm run prepare
+        npm pack
+
+    - name: Publish package
+      run: npm publish $(ls *.tgz)
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
