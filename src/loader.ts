@@ -41,7 +41,7 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
   const data = []
   for (const folder of folders) {
     const langFolderPath = folderPath + path.sep + folder
-    const module = langFolderPath.match(/app\/Modules\/([A-Za-z]+)/)
+    const module = langFolderPath.match(/[a-zA-Z]+(?=\/Resources\/Lang)/i)
     const lang = readThroughDir(langFolderPath)
 
     let translation = {
@@ -49,8 +49,8 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
       translations: convertToDotsSyntax(lang)
     };
 
-    if (module && module[1]) {
-      translation['module'] = module[1].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
+    if (module && module[0]) {
+      translation['module'] = module[0].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
     }
 
     data.push(translation);

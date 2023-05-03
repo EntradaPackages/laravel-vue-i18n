@@ -65,3 +65,11 @@ it('checks if there is .php translations', () => {
     expect(hasPhpTranslations(__dirname + '/fixtures/lang/')).toBe(true);
     expect(hasPhpTranslations(__dirname + '/fixtures/wronglangfolder/')).toBe(false);
 });
+
+it('transforms module .php lang files to .json', () => {
+    const langPath = __dirname + '/fixtures/lang/';
+    const files = generateFiles(langPath, parseAll(__dirname + '/fixtures/TestModule/Resources/Lang'));
+    const langEn = JSON.parse(fs.readFileSync(langPath + files[0].name).toString())
+
+    expect(langEn['test-module::messages.greeting']).toBe('Hello!');
+});
