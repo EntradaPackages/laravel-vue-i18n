@@ -3,6 +3,6 @@
  */
 export interface ParsedLangFileInterface {
   name: string
-  module?: string
+  namespace?: string
   translations: { [key: string]: string }
 }

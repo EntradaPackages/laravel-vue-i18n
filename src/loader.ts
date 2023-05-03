@@ -40,8 +40,12 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
 
   const data = []
   for (const folder of folders) {
+    if (folder === 'vendor') {
+      continue; // Don't proccess vendor overrides
+    }
+
     const langFolderPath = folderPath + path.sep + folder
-    const module = langFolderPath.match(/[a-zA-Z]+(?=\/Resources\/Lang)/i)
+    const namespace = langFolderPath.match(/[a-zA-Z]+(?=\/Resources\/Lang)/i)
     const lang = readThroughDir(langFolderPath)
 
     let translation = {
@@ -49,8 +53,8 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
       translations: convertToDotsSyntax(lang)
     };
 
-    if (module && module[0]) {
-      translation['module'] = module[0].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
+    if (namespace && namespace[0]) {
+      translation['namespace'] = namespace[0].replace(/[A-Z]+(?![a-z])|[A-Z]/g, (str, char) => (char ? '-' : '') + str.toLowerCase())
     }
 
     data.push(translation);
@@ -60,10 +64,10 @@ export const parseAll = (folderPath: string): ParsedLangFileInterface[] => {
     .filter(({ translations }) => {
       return Object.keys(translations).length > 0
     })
-    .map(({ module, folder, translations }) => {
+    .map(({ namespace, folder, translations }) => {
       return {
         name: `php_${folder}.json`,
-        module,
+        namespace,
         translations
       }
     })
@@ -155,7 +159,7 @@ export const readThroughDir = (dir) => {
 }
 
 export const generateFiles = (langPath: string, data: ParsedLangFileInterface[]): ParsedLangFileInterface[] => {
-  data = mergeData(data)
+  data = mergeData(parseOverrides(langPath, data))
 
   if (!fs.existsSync(langPath)) {
     fs.mkdirSync(langPath)
@@ -171,7 +175,7 @@ export const generateFiles = (langPath: string, data: ParsedLangFileInterface[])
 function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
   const obj = {}
 
-  data.forEach(({ name, module, translations }) => {
+  data.forEach(({ name, namespace, translations }) => {
     if (!obj[name]) {
       obj[name] = {}
     }
@@ -179,7 +183,7 @@ function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
     let mapped = {};
 
     Object.entries(translations).forEach(([key, val]) => {
-      mapped[module ? `${module}::${key}` : key] = val;
+      mapped[namespace ? `${namespace}::${key}` : key] = val;
     })
 
     obj[name] = { ...obj[name], ...mapped }
@@ -191,4 +195,29 @@ function mergeData(data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
   })
 
   return arr
+}
+
+function parseOverrides(langPath: string, data: ParsedLangFileInterface[]): ParsedLangFileInterface[] {
+  return data.map(translation => {
+    let vendorPath = `${langPath}/vendor/${translation.namespace}`.replace('/', path.sep)
+    let overrides = {};
+
+    if (!translation.namespace || !fs.existsSync(vendorPath)) {
+      return translation;
+    }
+
+    parseAll(vendorPath).forEach((override) => {
+      if (override.name !== translation.name) {
+        return
+      }
+
+      Object.entries(override.translations).forEach(([key, val]) => {
+        overrides[key] = val;
+      });
+    })
+
+    return {
+      ...translation, translations: { ...translation.translations, ...overrides }
+    }
+  });
 }

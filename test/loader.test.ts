@@ -73,3 +73,13 @@ it('transforms module .php lang files to .json', () => {
 
     expect(langEn['test-module::messages.greeting']).toBe('Hello!');
 });
+
+it('transforms module override .php lang files to .json', () => {
+    const langPath = __dirname + '/fixtures/lang/';
+    const files = generateFiles(langPath, parseAll(__dirname + '/fixtures/TestModule/Resources/Lang'));
+    const langEn = JSON.parse(fs.readFileSync(langPath + files[0].name).toString())
+
+    expect(langEn['test-module::auth.failed']).toBe('Unable to authorize request.');
+    expect(langEn['test-module::auth.foo']).toBe('bar');
+    expect(langEn['test-module::auth.bar']).toBe('baz');
+});
