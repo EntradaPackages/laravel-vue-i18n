@@ -1,10 +1,6 @@
 {
   "name": "laravel-vue-i18n-2.4",
   "version": "0.1.0",
-  "author": {
-    "name": "Francisco Madeira",
-    "email": "xico2k@gmail.com"
-  },
   "keywords": [
     "laravel",
     "vue",
@@ -15,7 +11,13 @@
     "src",
     "dist"
   ],
-  "repository": "https://github.com/xico2k/laravel-vue-i18n",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EntradaPackages/laravel-vue-i18n"
+  },
+  "publishConfig": {
+      "registry": "https://npm.pkg.github.com"
+  },
   "license": "MIT",
   "description": "allows to connect your `Laravel` Framework localization files with `Vue`.",
   "main": "dist/cjs/index.js",
